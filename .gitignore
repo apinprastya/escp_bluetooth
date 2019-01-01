@@ -1,0 +1,11 @@
+.DS_Store
+.dart_tool/
+
+.packages
+.pub/
+pubspec.lock
+
+build/
+/.idea/libraries/Dart_SDK.xml
+/.idea/libraries/Flutter_for_Android.xml
+/.metadata
