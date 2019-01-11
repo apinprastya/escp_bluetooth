@@ -10,11 +10,26 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   bool _isEnabled = false;
+  List<PrinterDevice> _printerList = [];
+  String _title = "";
 
   @override
   void initState() {
     super.initState();
     isOn();
+    EscpBluetooth.instance
+        .setPrinterDiscoveredCallback(printerDiscoveredCallback);
+  }
+
+  printerDiscoveredCallback(PrinterDevice device) {
+    print(device.name);
+    print(device.address);
+    if (_printerList.isEmpty ||
+        _printerList.firstWhere((v) => v.address == device.address) == null) {
+      setState(() {
+        _printerList = List<PrinterDevice>.from(_printerList)..add(device);
+      });
+    }
   }
 
   isOn() async {
@@ -33,15 +48,15 @@ class _MyAppState extends State<MyApp> {
   }
 
   scan() {
-    EscpBluetooth.instance.scan(callback: (device) {
-      print(device.name);
-      print(device.address);
-    });
+    EscpBluetooth.instance.scan();
   }
 
   getBounded() async {
     final ret = await EscpBluetooth.instance.getBounded();
-    print(ret);
+    setState(() {
+      _printerList = ret;
+    });
+    print(ret.toString());
   }
 
   @override
@@ -67,6 +82,10 @@ class _MyAppState extends State<MyApp> {
                 child: RaisedButton(
                   onPressed: _isEnabled
                       ? () {
+                          setState(() {
+                            _title = "Scan Result";
+                            _printerList = [];
+                          });
                           scan();
                         }
                       : null,
@@ -77,10 +96,30 @@ class _MyAppState extends State<MyApp> {
                 child: RaisedButton(
                   onPressed: _isEnabled
                       ? () {
+                          setState(() {
+                            _title = "Bounded List";
+                            _printerList = [];
+                          });
                           getBounded();
                         }
                       : null,
                   child: Text("Get Bounded"),
+                ),
+              ),
+              Divider(),
+              Text(
+                _title,
+                style: TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold),
+              ),
+              Divider(),
+              Expanded(
+                child: ListView(
+                  children: _printerList.map((v) {
+                    return ListTile(
+                      title: Text(v.name),
+                      subtitle: Text(v.address),
+                    );
+                  }).toList(),
                 ),
               ),
             ],

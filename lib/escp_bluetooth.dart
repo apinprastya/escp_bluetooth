@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:typed_data';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:simple_permissions/simple_permissions.dart';
 
 typedef EscpBluetoothTurnOnCallback(bool status);
 typedef EscpBluetoothPrinterDeviceDiscovered(PrinterDevice device);
@@ -53,11 +54,6 @@ class EscpBluetooth {
     }
   }
 
-  static Future<String> get platformVersion async {
-    final String version = await _channel.invokeMethod('getPlatformVersion');
-    return version;
-  }
-
   Future<bool> isOn() async {
     final isEnabled = await _channel.invokeMethod("isOn");
     return isEnabled;
@@ -68,10 +64,20 @@ class EscpBluetooth {
     _channel.invokeMethod("turnOn");
   }
 
-  scan({EscpBluetoothPrinterDeviceDiscovered callback}) {
+  scan() async {
+    bool hasPermissionCoarse = await SimplePermissions.checkPermission(
+        Permission.AccessCoarseLocation);
+    if (!hasPermissionCoarse) {
+      final status = await SimplePermissions.requestPermission(
+          Permission.AccessCoarseLocation);
+      if (status != PermissionStatus.authorized) return;
+    }
     _printerDivices = [];
-    _printerDiscoverCallback = callback;
     _channel.invokeMethod("scan");
+  }
+
+  setPrinterDiscoveredCallback(EscpBluetoothPrinterDeviceDiscovered callback) {
+    _printerDiscoverCallback = callback;
   }
 
   Future<List<PrinterDevice>> getBounded() async {
@@ -99,5 +105,9 @@ class PrinterDevice {
   PrinterDevice(this.name, this.address);
   factory PrinterDevice.fromJson(Map<String, dynamic> json) {
     return PrinterDevice(json['name'], json['mac_address']);
+  }
+
+  toString() {
+    return 'Name: $name; Address: $address';
   }
 }

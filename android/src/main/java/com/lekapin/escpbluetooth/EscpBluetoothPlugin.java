@@ -45,6 +45,7 @@ public class EscpBluetoothPlugin implements MethodCallHandler, PluginRegistry.Ac
         BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
         final ParcelUuid []uuids = device.getUuids();
         Log.d(TAG, "Bluetooth found " + device.getName() + " : " + device.getAddress());
+        if(device.getName() == null) return;
         for(int i = 0; i < uuids.length; i++) {
             Log.d(TAG, "Bluetooth UUID " + uuids[i].getUuid());
           if(uuids[i].getUuid().compareTo(printerUUID) == 0) {
