@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:escp_bluetooth/escp_bluetooth.dart';
 
@@ -63,67 +65,90 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       home: Scaffold(
-          appBar: AppBar(
-            title: const Text('Escp Bluetooth Example'),
-          ),
-          body: Column(
-            children: <Widget>[
-              Center(
-                child: RaisedButton(
-                  onPressed: _isEnabled
-                      ? null
-                      : () {
-                          turnOn();
-                        },
-                  child: Text("Turn ON Bluetooth"),
-                ),
+        appBar: AppBar(
+          title: const Text('Escp Bluetooth Example'),
+        ),
+        body: Column(
+          children: <Widget>[
+            Center(
+              child: RaisedButton(
+                onPressed: _isEnabled
+                    ? null
+                    : () {
+                        turnOn();
+                      },
+                child: Text("Turn ON Bluetooth"),
               ),
-              Center(
-                child: RaisedButton(
-                  onPressed: _isEnabled
-                      ? () {
-                          setState(() {
-                            _title = "Scan Result";
-                            _printerList = [];
-                          });
-                          scan();
-                        }
-                      : null,
-                  child: Text("Scan"),
-                ),
+            ),
+            Center(
+              child: RaisedButton(
+                onPressed: _isEnabled
+                    ? () {
+                        setState(() {
+                          _title = "Scan Result";
+                          _printerList = [];
+                        });
+                        scan();
+                      }
+                    : null,
+                child: Text("Scan"),
               ),
-              Center(
-                child: RaisedButton(
-                  onPressed: _isEnabled
-                      ? () {
-                          setState(() {
-                            _title = "Bounded List";
-                            _printerList = [];
-                          });
-                          getBounded();
-                        }
-                      : null,
-                  child: Text("Get Bounded"),
-                ),
+            ),
+            Center(
+              child: RaisedButton(
+                onPressed: _isEnabled
+                    ? () {
+                        setState(() {
+                          _title = "Bounded List";
+                          _printerList = [];
+                        });
+                        getBounded();
+                      }
+                    : null,
+                child: Text("Get Bounded"),
               ),
-              Divider(),
-              Text(
-                _title,
-                style: TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold),
+            ),
+            Divider(),
+            Text(
+              _title,
+              style: TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold),
+            ),
+            Divider(),
+            Expanded(
+              child: ListView(
+                children: _printerList.map((v) {
+                  return ListTile(
+                    title: Text(v.name),
+                    subtitle: Text(v.address),
+                    onTap: () async {
+                      await EscpBluetooth.instance.selectDevice(v);
+                      await EscpBluetooth.instance.connect();
+                      final escp = Escp();
+                      escp.bold(true);
+                      escp.text("TEST TEXT BOLD");
+                      escp.lineFeed();
+                      escp.bold(false);
+                      escp.text("TEXT NORMAL");
+                      escp.lineFeed();
+                      escp.center();
+                      escp.text("THIS IS CENTER TEXT");
+                      escp.lineFeed();
+                      escp.right();
+                      escp.text("THIS IS RIGHT TEXT");
+                      escp.lineFeed();
+                      await EscpBluetooth.instance.printData(escp.data());
+                      Timer(Duration(seconds: 20), () {
+                        EscpBluetooth.instance.disconnect();
+                      });
+                      //await EscpBluetooth.instance.disconnect();
+                    },
+                  );
+                }).toList(),
               ),
-              Divider(),
-              Expanded(
-                child: ListView(
-                  children: _printerList.map((v) {
-                    return ListTile(
-                      title: Text(v.name),
-                      subtitle: Text(v.address),
-                    );
-                  }).toList(),
-                ),
-              ),
-            ],
-          )),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

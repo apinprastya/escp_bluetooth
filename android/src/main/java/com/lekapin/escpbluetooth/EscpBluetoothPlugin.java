@@ -43,8 +43,10 @@ public class EscpBluetoothPlugin implements MethodCallHandler, PluginRegistry.Ac
       Log.d(TAG, action);
       if (BluetoothDevice.ACTION_FOUND.equals(action)) {
         BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+        device.fetchUuidsWithSdp();
         final ParcelUuid []uuids = device.getUuids();
-        Log.d(TAG, "Bluetooth found " + device.getName() + " : " + device.getAddress());
+        Log.d(TAG, "Bluetooth found " + device.getName() + " : " + device.getAddress() + " : " + uuids);
+        if(uuids == null) return;
         if(device.getName() == null) return;
         for(int i = 0; i < uuids.length; i++) {
             Log.d(TAG, "Bluetooth UUID " + uuids[i].getUuid());
@@ -151,6 +153,7 @@ public class EscpBluetoothPlugin implements MethodCallHandler, PluginRegistry.Ac
         result.success(bt);
     } else if(call.method.equals("connect")) {
         final String address = (String) call.arguments;
+        Log.d(TAG, "Connect to device " + address);
         if (!mBluetoothAdapter.isEnabled()) {
             Log.e(TAG, "Connect: Bluetooth is off");
             result.error("EscpBluetoothPlugin", "Connect: Bluetooth is Off", "Connect: Bluetooth is Off");
@@ -158,7 +161,7 @@ public class EscpBluetoothPlugin implements MethodCallHandler, PluginRegistry.Ac
             mDevice = mBluetoothAdapter.getRemoteDevice(address);
             if(mSocket != null && mSocket.isConnected()) {
                 result.success(true);
-            } else if (mDevice != null) {
+            } else if (mDevice == null) {
                 Log.e(TAG, "Connect: device not available");
                 result.error("EscpBluetoothPlugin", "Connect: device not available", "Connect: device not available");
             } else {
@@ -173,6 +176,7 @@ public class EscpBluetoothPlugin implements MethodCallHandler, PluginRegistry.Ac
                     try {
                         mSocket.connect();
                         mOutputStream = mSocket.getOutputStream();
+                        Log.d(TAG, "Connected");
                     } catch (Exception e) {
                         Log.e(TAG, "Connect: " + e.getMessage());
                         result.error("EscpBluetoothPlugin", e.getMessage(), e.getMessage());
@@ -188,6 +192,7 @@ public class EscpBluetoothPlugin implements MethodCallHandler, PluginRegistry.Ac
         } else if(mSocket.isConnected()) {
             try {
                 mSocket.close();
+                Log.d(TAG, "Disconnected");
             } catch (Exception e) {
                 Log.e(TAG, "Disconnect: " + e.getMessage());
                 result.error("EscpBluetoothPlugin", e.getMessage(), e.getMessage());
@@ -200,6 +205,7 @@ public class EscpBluetoothPlugin implements MethodCallHandler, PluginRegistry.Ac
         } else {
             try {
                 mOutputStream.write((byte[]) call.arguments);
+                result.success(true);
             } catch(Exception e) {
                 Log.e(TAG, "printData: " + e.getMessage());
                 result.error("EscpBluetoothPlugin", "printData: " + e.getMessage(), "printData: " + e.getMessage());

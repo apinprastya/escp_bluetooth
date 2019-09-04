@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:simple_permissions/simple_permissions.dart';
+export 'package:escp_bluetooth/escp.dart';
 
 typedef EscpBluetoothTurnOnCallback(bool status);
 typedef EscpBluetoothPrinterDeviceDiscovered(PrinterDevice device);
@@ -54,9 +55,8 @@ class EscpBluetooth {
     }
   }
 
-  Future<bool> isOn() async {
-    final isEnabled = await _channel.invokeMethod("isOn");
-    return isEnabled;
+  Future<bool> isOn() {
+    return _channel.invokeMethod("isOn");
   }
 
   turnOn({EscpBluetoothTurnOnCallback callback}) {
@@ -95,7 +95,15 @@ class EscpBluetooth {
   }
 
   Future<bool> printData(Uint8List data) {
-    return _channel.invokeMethod("printData");
+    return _channel.invokeMethod("printData", data);
+  }
+
+  Future<bool> connect() {
+    return _channel.invokeMethod("connect", _selectedDevices.address);
+  }
+
+  Future<bool> disconnect() {
+    return _channel.invokeMethod("disconnect");
   }
 }
 
